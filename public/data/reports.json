@@ -1,0 +1,199 @@
+[
+  {
+    "description": "Compare Annual Enrollment, Degrees Awarded, Retention Rates, Graduation Rates, & Credit Hours; Supporting Details Provided",
+    "groups": ["factbook"],
+    "image": "/images/factbook.svg",
+    "link": "https://irserver.eku.edu/factbook/",
+    "secret": false,
+    "title": "Factbook"
+  },
+  {
+    "description": "University Data Requests",
+    "groups": ["data requests"],
+    "image": "/images/request-form.svg",
+    "link": "https://form.asana.com/?k=V3l3wViQWRhfjob8Y5iAbQ&d=978674317228910",
+    "secret": false,
+    "title": "Data Request Form"
+  },
+  {
+    "description": "Compare Annual Fall Enrollment, Degrees Awarded, Retention Rates, Graduation Rates, Progression Rates, & DFW Rates of University or College",
+    "groups": ["fastfacts"],
+    "image": "/images/fast-facts.png",
+    "link": "https://www.irserver2.eku.edu/D3/Factbook/FB0/",
+    "secret": false,
+    "title": "Fast Facts"
+  },
+  {
+    "description": "The Common Data Set (CDS) initiative is a collaborative effort among data providers in the higher education community",
+    "groups": ["cds"],
+    "image": "/images/cds.svg",
+    "link": "/data/CDS-22-23.xlsx",
+    "secret": false,
+    "title": "Common Data Set 22-23"
+  },
+  {
+    "description": "The Common Data Set (CDS) initiative is a collaborative effort among data providers in the higher education community",
+    "groups": ["cds"],
+    "image": "/images/cds.svg",
+    "link": "/data/CDS-23-24.xlsx",
+    "secret": false,
+    "title": "Common Data Set 23-24"
+  },
+  {
+    "description": "View and Interact with a Statistical Report of EKU Spring 2024 Graduates",
+    "groups": ["spring graduates"],
+    "image": "/images/spring-graduation-2024.png",
+    "link": "https://ir.eku.edu/spring-graduation-2024",
+    "secret": false,
+    "title": "Spring Graduation 2024"
+  },
+  {
+    "description": "Interact with a Colorful Heatmap of KY Counties Fall 2024 Enrollment",
+    "groups": ["service region map"],
+    "image": "/images/serviceregion.png",
+    "link": "https://www.irserver2.eku.edu/reports/serviceregion/",
+    "secret": false,
+    "title": "KY Service Region"
+  },
+  {
+    "description": "View and Interact with a PowerBI Report of EKU Enrollment throughout Time",
+    "groups": ["historic enrollment"],
+    "image": "/images/historicalenrollment.png",
+    "link": "https://irserver2.eku.edu/reports/historicalenrollment/",
+    "secret": false,
+    "title": "Historical Enrollment"
+  },
+  {
+    "description": "View EKU's Peer Institutions & EKU's Aspirational Institutions",
+    "groups": ["benchmarks"],
+    "image": "/images/benchmarkschools.png",
+    "link": "https://www.irserver2.eku.edu/reports/benchmarkschools/",
+    "secret": false,
+    "title": "Benchmarks"
+  },
+  {
+    "description": "Compare Each Year's First Day Enrollment of New Freshman",
+    "groups": ["first day enrollment"],
+    "image": "/images/firstdayenrollment.png",
+    "link": "https://irserver2.eku.edu/reports/firstdayenrollment/",
+    "secret": true,
+    "title": "First Day Enrollment"
+  },
+  {
+    "description": "Compare Annual Number of Full-Time & Part-Time Faculty, Full-Time & Part-Time Staff, & Part-Time Students",
+    "groups": ["faculty/staff"],
+    "image": "/images/facultystaff.png",
+    "link": "https://www.irserver2.eku.edu/reports/pc/facultystaff/",
+    "secret": true,
+    "title": "Full-Time Faculty & Staff"
+  },
+  {
+    "description": "Compare KPI Metrics by EKU Target, CPE Target, Agreed Target, Average, Predicted, & Recorded",
+    "groups": ["cpe kpi metrics"],
+    "image": "/images/kpi-metrics.png",
+    "link": "https://www.irserver2.eku.edu/Reports/CPE/Metrics/KPI",
+    "secret": true,
+    "title": "KPI Metrics"
+  },
+  {
+    "description": "Compare Diversity Metrics by EKU Target, CPE Target, Agreed Target, Average, Predicted, & Recorded",
+    "groups": ["cpe diversity metrics"],
+    "image": "/images/diversity-metrics.png",
+    "link": "https://www.irserver2.eku.edu/Reports/CPE/Metrics/Diversity",
+    "secret": true,
+    "title": "Diversity Metrics"
+  },
+  {
+    "description": "Compare Annual Retention Rate of Varying Groups",
+    "groups": ["retention rates"],
+    "image": "/images/retentionrate.png",
+    "link": "https://irserver2.eku.edu/Reports/PC/RetentionRate/",
+    "secret": true,
+    "title": "Retention Rates"
+  },
+  {
+    "description": "Compare Annual Enrollment Recorded at Each Day of Semester",
+    "groups": ["day to day enrollment"],
+    "image": "/images/daytodayenrollment.png",
+    "link": "https://irserver2.eku.edu/Reports/pc/daytodayenrollment/",
+    "secret": true,
+    "title": "Day To Day Enrollment"
+  },
+  {
+    "description": "Compare Annual Campaign Report, Contribution Source Report, Eastern Fund, Board Participation, Endowment Market Performance, & Foundation Scholarships",
+    "groups": ["development"],
+    "image": "/images/development.png",
+    "link": "https://irserver2.eku.edu/Reports/PC/Development/v01/",
+    "secret": true,
+    "title": "Development & Alumni Engagement"
+  },
+  {
+    "description": "Compare Statistics of the Four Main Freshman Demographics",
+    "image": "/images/freshmanprofile.png",
+    "link": "https://irserver2.eku.edu/Reports/freshmanprofile/",
+    "secret": true,
+    "title": "Freshman Profile"
+  },
+  {
+    "description": "Compare Weekly & Yearly Applied, Admitted, & Enrolled of Varying Groups",
+    "image": "/images/applications.png",
+    "link": "https://irserver2.eku.edu/Reports/PC/Applications/",
+    "secret": true,
+    "title": "Applied, Admitted, & Enrolled"
+  },
+  {
+    "description": "Compare Weekly & Yearly Enrollment of Varying Groups",
+    "image": "/images/current-enrollment.png",
+    "link": "https://irserver2.eku.edu/Reports/PC/Program%20Enrollment/",
+    "secret": true,
+    "title": "Current Enrollment"
+  },
+  {
+    "description": "Compare Annual KPI's of Each County in KY",
+    "groups": ["admin"],
+    "image": "/images/counties.png",
+    "link": "https://irserver2.eku.edu/Reports/SAS/Counties/",
+    "secret": true,
+    "title": "KY County Reports"
+  },
+  {
+    "description": "Compare Change in Enrollment within Various Measures",
+    "groups": ["admin"],
+    "image": "/images/enrreport.png",
+    "link": "https://www.irserver2.eku.edu/reports/enrreport/",
+    "secret": true,
+    "title": "Enrollment Report"
+  },
+  {
+    "description": "Compare DFW Rate & Grade Distribution of Varying Groups",
+    "groups": ["admin"],
+    "image": "/images/dfw.png",
+    "link": "https://irserver2.eku.edu/Reports/PC/DFW/",
+    "secret": true,
+    "title": "Grade Distribution"
+  },
+  {
+    "description": "Compare Faculty Workload within Varying Groups; Personal Workload Reports can be Generated",
+    "groups": ["admin"],
+    "image": "/images/facultyworkload.png",
+    "link": "https://irserver2.eku.edu/reports/facultyworkload/",
+    "secret": true,
+    "title": "Faculty Workload"
+  },
+  {
+    "description": "Compare Regional University Performance in Different Metrics; Model to Calculate Performance can be Modified",
+    "groups": ["admin", "presidents cabinet"],
+    "image": "/images/performancemodel.png",
+    "link": "https://irserver2.eku.edu/Reports/performancemodel/",
+    "secret": true,
+    "title": "Performance Model"
+  },
+  {
+    "description": "View Scholarship Budgets, View Student Financial Aid, and Compare Number of Offered, Accepted, Paid, Declined, & Cancelled Scholarships",
+    "groups": ["admin", "presidents cabinet", "scholarship"],
+    "image": "/images/budgets.png",
+    "link": "https://irserver2.eku.edu/Reports/FinancialAid/budgets",
+    "secret": true,
+    "title": "Scholarship Dashboard"
+  }
+]
