@@ -14,6 +14,11 @@ import { usePromise } from "./hooks/usePromise";
 // have a delete mode
 // have an add mode
 
+// if someone adds something to default external, need team to be notified through email
+// if new user or list item gets added, and doesn't get placed at the top due to sorting, should the list automatically scroll to them?
+// add title & url (in small font) to report list items (make element title={description})
+// search for each column
+
 const nextSortMethod = {
   ascending: "descending",
   descending: "none",
