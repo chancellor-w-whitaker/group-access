@@ -1,5 +1,7 @@
 import { useState } from "react";
 
+import { FeatureColumns } from "./components/FeatureColumns";
+import { ListGroup } from "./components/ListGroup";
 import { usePromise } from "./hooks/usePromise";
 
 const getJsonPromise = (url) => fetch(url).then((response) => response.json());
@@ -10,6 +12,10 @@ const [usersPromise, reportsPromise] = [
 ];
 
 const [usersPrimaryKey, reportsPrimaryKey] = ["email", "link"];
+
+// have an edit mode per group (items are disabled until then)
+// have a delete mode
+// have an add mode
 
 export default function App() {
   const users = usePromise(usersPromise);
@@ -64,51 +70,126 @@ export default function App() {
 
   const lists = getLists();
 
-  const listGroups = useListGroups(lists);
+  const [editing, setEditing] = useState(false);
+
+  const {
+    lists: {
+      reports: reportsListGroup,
+      groups: groupsListGroup,
+      users: usersListGroup,
+    },
+    checked: { group: checkedGroup },
+  } = useListGroups({ editing, lists });
+
+  const features = [
+    {
+      content: (
+        <>
+          <div className="mb-3 d-flex gap-3 flex-wrap">
+            <button
+              className={`btn btn-primary ${
+                !checkedGroup ? "text-decoration-line-through" : ""
+              } ${editing ? "active" : ""}`.trim()}
+              onClick={() => setEditing((state) => !state)}
+              disabled={!checkedGroup}
+              type="button"
+            >
+              Edit Access
+            </button>
+            <button
+              className={`btn btn-danger ${
+                editing || !checkedGroup || 1 !== 2
+                  ? "text-decoration-line-through"
+                  : ""
+              }`.trim()}
+              disabled={editing || !checkedGroup || 1 !== 2}
+              type="button"
+            >
+              Delete
+            </button>
+            {editing && (
+              <>
+                <button className="btn btn-secondary" type="button">
+                  Cancel
+                </button>
+                <button className="btn btn-success" type="button">
+                  Confirm
+                </button>
+              </>
+            )}
+          </div>
+          <ListGroup {...groupsListGroup}></ListGroup>
+        </>
+      ),
+      title: "Groups",
+    },
+    {
+      content: (
+        <>
+          <div className="mb-3 d-flex gap-3 flex-wrap">
+            <button
+              className={`btn btn-success text-decoration-line-through`}
+              type="button"
+              disabled
+            >
+              Add
+            </button>
+            <button
+              className={`btn btn-danger text-decoration-line-through`}
+              type="button"
+              disabled
+            >
+              Delete
+            </button>
+          </div>
+          <ListGroup {...usersListGroup}></ListGroup>
+        </>
+      ),
+      title: "Users",
+    },
+    {
+      content: (
+        <>
+          <div className="mb-3 d-flex gap-3 flex-wrap">
+            <button
+              className="btn btn-success text-decoration-line-through"
+              type="button"
+              disabled
+            >
+              Add
+            </button>
+            <button
+              className="btn btn-danger text-decoration-line-through"
+              type="button"
+              disabled
+            >
+              Delete
+            </button>
+          </div>
+          <ListGroup {...reportsListGroup}></ListGroup>
+        </>
+      ),
+      title: "Reports",
+    },
+  ];
 
   return (
-    <main className="container">
-      <div className="my-3 p-3 bg-body rounded shadow-sm">
-        <div className="d-flex flex-column flex-md-row p-4 gap-4 py-md-5 align-items-start justify-content-center">
-          <ListGroup {...listGroups.users}></ListGroup>
-          <ListGroup {...listGroups.groups}></ListGroup>
-          <ListGroup {...listGroups.reports}></ListGroup>
-        </div>
-      </div>
-    </main>
+    <FeatureColumns header="Access Settings">{features}</FeatureColumns>
+    // <main className="container">
+    //   <div className="my-3 p-3 bg-body rounded shadow-sm">
+    //     <div className="d-flex flex-column flex-md-row p-4 gap-4 py-md-5 align-items-start justify-content-center">
+    //       <ListGroup {...listGroups.users}></ListGroup>
+    //       <ListGroup {...listGroups.groups}></ListGroup>
+    //       <ListGroup {...listGroups.reports}></ListGroup>
+    //     </div>
+    //   </div>
+    // </main>
   );
 }
 
-const ListGroup = ({ onChange, items }) => {
-  return (
-    <div className="list-group shadow-sm">
-      {items.map(
-        ({ variant = "light", type = "radio", disabled, checked, value }) => (
-          <label
-            className={`list-group-item d-flex gap-2 list-group-item-${variant} ${
-              disabled ? "disabled" : ""
-            }`.trimEnd()}
-            key={value}
-          >
-            <input
-              className="form-check-input flex-shrink-0"
-              onChange={onChange}
-              checked={checked}
-              value={value}
-              type={type}
-            />
-            <span>{value}</span>
-          </label>
-        )
-      )}
-    </div>
-  );
-};
-
 const useListGroups = ({
-  reports: reportsList,
-  groups: groupsList,
-  users: usersList,
+  lists: { reports: reportsList, groups: groupsList, users: usersList },
+  editing,
 }) => {
   const getOnChange =
     (setState) =>
@@ -136,7 +217,7 @@ const useListGroups = ({
     : { reportIDs: new Set(), userIDs: new Set() };
 
   const usersProps = {
-    items: [...usersList].map((userID) => ({
+    children: [...usersList].map((userID) => ({
       checked: checkedUsers.has(userID) || userIDs.has(userID),
       variant: userIDs.has(userID) && "warning",
       disabled: !checkedGroup,
@@ -147,7 +228,7 @@ const useListGroups = ({
   };
 
   const reportsProps = {
-    items: Object.keys(reportsList).map((reportID) => ({
+    children: Object.keys(reportsList).map((reportID) => ({
       checked: checkedReports.has(reportID) || reportIDs.has(reportID),
       variant: reportIDs.has(reportID) && "warning",
       disabled: !checkedGroup,
@@ -158,7 +239,7 @@ const useListGroups = ({
   };
 
   const groupsProps = {
-    items: Object.keys(groupsList).map((groupID) => ({
+    children: Object.keys(groupsList).map((groupID) => ({
       variant: groupID === checkedGroup && "warning",
       checked: groupID === checkedGroup,
       value: groupID,
@@ -167,5 +248,12 @@ const useListGroups = ({
     onChange: getOnChange(setCheckedGroup),
   };
 
-  return { reports: reportsProps, groups: groupsProps, users: usersProps };
+  return {
+    lists: {
+      reports: reportsProps,
+      groups: groupsProps,
+      users: usersProps,
+    },
+    checked: { group: checkedGroup },
+  };
 };
