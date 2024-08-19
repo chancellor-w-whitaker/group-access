@@ -43,8 +43,8 @@ export default function App() {
   const [editing, setEditing] = useState(false);
 
   const [sort, setSort] = useState({
-    reports: "none",
-    users: "none",
+    reports: "ascending",
+    users: "ascending",
   });
 
   const changeSort = (listName) => {
@@ -103,16 +103,18 @@ export default function App() {
       content: (
         <>
           <div className="mb-3 d-flex gap-3 flex-wrap">
-            <button
-              className={`btn btn-primary ${
-                !checked.group ? "text-decoration-line-through" : ""
-              } ${editing ? "active" : ""}`.trim()}
-              onClick={onClickEditButton}
-              disabled={!checked.group}
-              type="button"
-            >
-              Edit Access
-            </button>
+            {!editing && (
+              <button
+                className={`btn btn-primary bg-gradient ${
+                  !checked.group ? "text-decoration-line-through" : ""
+                } ${editing ? "active" : ""}`.trim()}
+                onClick={onClickEditButton}
+                disabled={!checked.group}
+                type="button"
+              >
+                Edit access
+              </button>
+            )}
             {/* <button
               className={`btn btn-danger ${
                 editing || !checked.group || 1 !== 2
@@ -127,15 +129,15 @@ export default function App() {
             {editing && (
               <>
                 <button
+                  className="btn btn-danger bg-gradient"
                   onClick={onClickCancelButton}
-                  className="btn btn-danger"
                   type="button"
                 >
                   Cancel
                 </button>
                 <button
+                  className="btn btn-success bg-gradient"
                   onClick={onClickSaveButton}
-                  className="btn btn-success"
                   type="button"
                 >
                   Save
@@ -146,6 +148,7 @@ export default function App() {
           <ListGroup {...props.groups}></ListGroup>
         </>
       ),
+      icon: <i className="bi bi-people-fill"></i>,
       title: "Groups",
     },
     {
@@ -153,7 +156,7 @@ export default function App() {
         <>
           <div className="mb-3 d-flex gap-3 flex-wrap">
             <button
-              className={`btn btn-secondary ${
+              className={`btn btn-secondary bg-gradient ${
                 !checked.group ? "text-decoration-line-through" : ""
               }`.trim()}
               onClick={onClickUsersSort}
@@ -178,6 +181,7 @@ export default function App() {
           <ListGroup {...props.users}></ListGroup>
         </>
       ),
+      icon: <i className="bi bi-person-fill"></i>,
       title: "Users",
     },
     {
@@ -185,7 +189,7 @@ export default function App() {
         <>
           <div className="mb-3 d-flex gap-3 flex-wrap">
             <button
-              className={`btn btn-secondary ${
+              className={`btn btn-secondary bg-gradient ${
                 !checked.group ? "text-decoration-line-through" : ""
               }`.trim()}
               onClick={onClickReportsSort}
@@ -212,11 +216,27 @@ export default function App() {
           <ListGroup {...props.reports}></ListGroup>
         </>
       ),
+      icon: <i className="bi bi-clipboard2-fill"></i>,
       title: "Reports",
     },
   ];
 
-  return <FeatureColumns header="Access Settings">{features}</FeatureColumns>;
+  return (
+    <FeatureColumns
+      header={
+        <div>
+          Settings{" "}
+          {!checked.group ? (
+            <span className="fs-2">{`(Select a group)`}</span>
+          ) : (
+            ""
+          )}
+        </div>
+      }
+    >
+      {features}
+    </FeatureColumns>
+  );
 }
 
 const useListGroups = ({
@@ -259,12 +279,47 @@ const useListGroups = ({
   const sortUsers = ({ value: a }, { value: b }) =>
     usersSortConverter(userIDs.has(a)) - usersSortConverter(userIDs.has(b));
 
+  const isGroupItemDisabled = (groupID) =>
+    checkedGroup && editing && groupID !== checkedGroup;
+
   const props = {
+    groups: {
+      children: Object.entries(groupsList).map(([groupID, object]) => ({
+        badges: [
+          <span
+            className={`badge bg-gradient shadow-sm text-bg-${
+              object.userIDs.size ? "light" : "light"
+            } d-flex gap-1 align-items-center`}
+            key={"users"}
+          >
+            {object.userIDs.size}
+            <i className="bi bi-person-fill"></i>
+          </span>,
+          <span
+            className={`badge bg-gradient shadow-sm text-bg-${
+              object.reportIDs.size ? "light" : "light"
+            } d-flex gap-1 align-items-center`}
+            key={"reports"}
+          >
+            {object.reportIDs.size}
+            <i className="bi bi-clipboard2-fill"></i>
+          </span>,
+        ],
+        className: isGroupItemDisabled(groupID) ? "opacity-25" : "",
+        variant: groupID === checkedGroup && "warning",
+        disabled: isGroupItemDisabled(groupID),
+        checked: groupID === checkedGroup,
+        value: groupID,
+        type: "radio",
+      })),
+      onChange: getInputOnChangeHandler(setCheckedGroup),
+    },
     reports: {
       children: Object.keys(reportsList)
         .map((reportID) => ({
           variant: reportIDs.has(reportID) && "warning",
           checked: checkedReports.has(reportID),
+          className: !checkedGroup ? "" : "",
           disabled: !editing,
           type: "checkbox",
           value: reportID,
@@ -272,20 +327,11 @@ const useListGroups = ({
         .sort(sortReports),
       onChange: getInputOnChangeHandler(setCheckedReports),
     },
-    groups: {
-      children: Object.keys(groupsList).map((groupID) => ({
-        disabled: checkedGroup && editing && groupID !== checkedGroup,
-        variant: groupID === checkedGroup && "warning",
-        checked: groupID === checkedGroup,
-        value: groupID,
-        type: "radio",
-      })),
-      onChange: getInputOnChangeHandler(setCheckedGroup),
-    },
     users: {
       children: [...usersList]
         .map((userID) => ({
           variant: userIDs.has(userID) && "warning",
+          className: !checkedGroup ? "" : "",
           checked: checkedUsers.has(userID),
           disabled: !editing,
           type: "checkbox",
