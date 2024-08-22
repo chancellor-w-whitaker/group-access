@@ -22,7 +22,11 @@ import { usePromise } from "./hooks/usePromise";
 // * also keep in mind how the onClick function for adding a new group will differ from the new user version
 // * add title & url (in small font) to report list items (make element title={description})
 // * search for each column
-// export in original format
+// * export in original format
+
+// ! search for report should include url as well
+// ! when not editing, give ability to click (activate) user or report to show connections
+// ! check all/uncheck all
 
 const downloadJson = (json, filename = "example") => {
   // Turn the JSON object into a string
