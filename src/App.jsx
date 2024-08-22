@@ -24,6 +24,56 @@ import { usePromise } from "./hooks/usePromise";
 // * search for each column
 // export in original format
 
+const downloadJson = (json, filename = "example") => {
+  // Turn the JSON object into a string
+  const data = JSON.stringify(json);
+
+  // Pass the string to a Blob and turn it
+  // into an ObjectURL
+  const blob = new Blob([data], { type: "application/json" });
+  const jsonObjectUrl = URL.createObjectURL(blob);
+
+  // Create an anchor element, set it's
+  // href to be the Object URL we have created
+  // and set the download property to be the file name
+  // we want to set
+  const anchorEl = document.createElement("a");
+  anchorEl.href = jsonObjectUrl;
+  anchorEl.download = `${filename}.json`;
+
+  // There is no need to actually attach the DOM
+  // element but we do need to click on it
+  anchorEl.click();
+
+  // We don't want to keep a reference to the file
+  // any longer so we release it manually
+  URL.revokeObjectURL(jsonObjectUrl);
+};
+
+const backToOriginalFormat = (settings) => {
+  const { reports, groups, users } = settings;
+
+  const reportsJson = Object.entries(reports).map(([reportID, report]) => {
+    const relevantGroups = Object.entries(groups)
+      .filter(([groupID, { reportIDs }]) => reportIDs.has(reportID))
+      .map(([groupID]) => groupID);
+
+    return { ...report, groups: relevantGroups };
+  });
+
+  const usersJson = [...users].map((userID) => ({
+    [userConstants.primaryKey]: userID,
+    ...Object.fromEntries(
+      Object.entries(groups).map(([groupID, { userIDs }]) => [
+        groupID,
+        userIDs.has(userID) ? 1 : null,
+      ])
+    ),
+  }));
+
+  return { reports: reportsJson, users: usersJson };
+};
+
 const nextSortMethod = {
   ascending: "descending",
   descending: "none",
@@ -308,42 +358,35 @@ export default function App() {
     },
   ];
 
-  const backToOriginalFormat = () => {
-    const { reports, groups, users } = settings;
+  const exportJson = () => {
+    const files = backToOriginalFormat(settings);
 
-    const reportsJson = Object.entries(reports).map(([reportID, report]) => {
-      const relevantGroups = Object.entries(groups)
-        .filter(([groupID, { reportIDs }]) => reportIDs.has(reportID))
-        .map(([groupID]) => groupID);
-
-      return { ...report, groups: relevantGroups };
-    });
-
-    const usersJson = [...users].map((userID) => ({
-      [userConstants.primaryKey]: userID,
-      ...Object.fromEntries(
-        Object.entries(groups).map(([groupID, { userIDs }]) => [
-          groupID,
-          userIDs.has(userID) ? 1 : null,
-        ])
-      ),
-    }));
-
-    return { reports: reportsJson, users: usersJson };
+    Object.entries(files).forEach(([filename, json]) =>
+      downloadJson(json, filename)
+    );
   };
-
-  console.log(backToOriginalFormat());
 
   return (
     <FeatureColumns
       header={
-        <div>
-          Settings{" "}
-          {!checked.group ? (
-            <span className="fs-2">{`(Select a group)`}</span>
-          ) : (
-            ""
-          )}
+        <div className="d-flex gap-2 flex-wrap">
+          <div>Settings</div>
+          <div>
+            {!checked.group ? (
+              <span className="fs-2">{`(Select a group)`}</span>
+            ) : (
+              ""
+            )}
+          </div>
+          <div>
+            <button
+              className="btn btn-primary bg-gradient"
+              onClick={exportJson}
+              type="button"
+            >
+              Export
+            </button>
+          </div>
         </div>
       }
     >
