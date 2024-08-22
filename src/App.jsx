@@ -15,9 +15,14 @@ import { usePromise } from "./hooks/usePromise";
 // have an add mode
 
 // if someone adds something to default external, need team to be notified through email
+
 // if new user or list item gets added, and doesn't get placed at the top due to sorting, should the list automatically scroll to them?
-// add title & url (in small font) to report list items (make element title={description})
-// search for each column
+// ? in other words, need to make each list scrollable with constant height,
+// ? and when new item gets added, make list scrollTo new item
+// ! also keep in mind how the onClick function for adding a new group will differ from the new user version
+// * add title & url (in small font) to report list items (make element title={description})
+// * search for each column
+// export in original format
 
 const nextSortMethod = {
   ascending: "descending",
@@ -31,6 +36,54 @@ const sortSymbol = {
   none: "",
 };
 
+const SearchInput = ({
+  placeholder = "Type to filter...",
+  autoComplete = "false",
+  className = "mb-3",
+  type = "search",
+  onChange,
+  ...rest
+}) => {
+  const entireClassName = `form-control ${className}`.trim();
+
+  const handleChange = (e) => onChange(e.target.value);
+
+  return (
+    <input
+      className={entireClassName}
+      autoComplete={autoComplete}
+      placeholder={placeholder}
+      onChange={handleChange}
+      type={type}
+      {...rest}
+    />
+  );
+};
+
+const NewItemField = ({ onChange, disabled, onClick, value }) => {
+  const handleChange = (e) => onChange(e.target.value);
+
+  return (
+    <form className="d-flex mb-3">
+      <input
+        className="form-control me-2"
+        onChange={handleChange}
+        placeholder="New item"
+        value={value}
+        type="text"
+      />
+      <button
+        className="btn btn-outline-success"
+        disabled={disabled}
+        onClick={onClick}
+        type="submit"
+      >
+        Add
+      </button>
+    </form>
+  );
+};
+
 export default function App() {
   const users = usePromise(userConstants.promise);
 
@@ -40,6 +93,8 @@ export default function App() {
     () => getInitialLists({ reports, users }),
     [reports, users]
   );
+
+  console.log(lists);
 
   const [settings, setSettings] = useResettableState(lists);
 
@@ -60,11 +115,13 @@ export default function App() {
     });
   };
 
-  const { checked, cancel, props } = useListGroups({
-    lists: settings,
-    editing,
-    sort,
-  });
+  const { newItemFields, conditions, checked, cancel, search, props } =
+    useListGroups({
+      lists: settings,
+      setSettings,
+      editing,
+      sort,
+    });
 
   const saveChanges = () => {
     setSettings((state) => {
@@ -111,10 +168,12 @@ export default function App() {
             {!editing && (
               <button
                 className={`btn btn-primary bg-gradient ${
-                  !checked.group ? "text-decoration-line-through" : ""
+                  conditions.cannotEdit || !checked.group
+                    ? "text-decoration-line-through"
+                    : ""
                 } ${editing ? "active" : ""}`.trim()}
+                disabled={!checked.group || conditions.cannotEdit}
                 onClick={onClickEditButton}
-                disabled={!checked.group}
                 type="button"
               >
                 Edit access
@@ -150,6 +209,9 @@ export default function App() {
               </>
             )}
           </div>
+          <div>
+            <SearchInput {...search.groups}></SearchInput>
+          </div>
           <ListGroup {...props.groups}></ListGroup>
         </>
       ),
@@ -182,6 +244,12 @@ export default function App() {
             >
               Delete
             </button> */}
+          </div>
+          <div>
+            <NewItemField {...newItemFields.users}></NewItemField>
+          </div>
+          <div>
+            <SearchInput {...search.users}></SearchInput>
           </div>
           <ListGroup {...props.users}></ListGroup>
         </>
@@ -218,6 +286,9 @@ export default function App() {
               Delete
             </button> */}
           </div>
+          <div>
+            <SearchInput {...search.reports}></SearchInput>
+          </div>
           <ListGroup {...props.reports}></ListGroup>
         </>
       ),
@@ -247,9 +318,18 @@ export default function App() {
 const useListGroups = ({
   lists: { reports: reportsList, groups: groupsList, users: usersList },
   sort: { reports: reportsSort, users: usersSort },
+  setSettings,
   editing,
 }) => {
   const [checkedGroup, setCheckedGroup] = useState();
+
+  const [groupSearchValue, onGroupSearchValueChange] = useState("");
+
+  const groupsSearch = {
+    onChange: onGroupSearchValueChange,
+    value: groupSearchValue,
+    disabled: editing,
+  };
 
   const { reportIDs, userIDs } = groupsList[checkedGroup]
     ? groupsList[checkedGroup]
@@ -260,7 +340,23 @@ const useListGroups = ({
 
   const [checkedUsers, setCheckedUsers] = useResettableState(userIDs);
 
+  const [userSearchValue, onUserSearchValueChange] = useState("");
+
+  const usersSearch = {
+    onChange: onUserSearchValueChange,
+    value: userSearchValue,
+    disabled: editing,
+  };
+
   const [checkedReports, setCheckedReports] = useResettableState(reportIDs);
+
+  const [reportSearchValue, onReportSearchValueChange] = useState("");
+
+  const reportsSearch = {
+    onChange: onReportSearchValueChange,
+    value: reportSearchValue,
+    disabled: editing,
+  };
 
   const cancelEditing = () => {
     setCheckedUsers(userIDs);
@@ -287,48 +383,68 @@ const useListGroups = ({
   const isGroupItemDisabled = (groupID) =>
     checkedGroup && editing && groupID !== checkedGroup;
 
+  const search = {
+    reports: reportsSearch,
+    groups: groupsSearch,
+    users: usersSearch,
+  };
+
   const props = {
     groups: {
-      children: Object.entries(groupsList).map(([groupID, object]) => ({
-        badges: [
-          <span
-            className={`badge bg-gradient shadow-sm text-bg-${
-              object.userIDs.size ? "light" : "light"
-            } d-flex gap-1 align-items-center`}
-            key={"users"}
-          >
-            {object.userIDs.size}
-            <i className="bi bi-person-fill"></i>
-          </span>,
-          <span
-            className={`badge bg-gradient shadow-sm text-bg-${
-              object.reportIDs.size ? "light" : "light"
-            } d-flex gap-1 align-items-center`}
-            key={"reports"}
-          >
-            {object.reportIDs.size}
-            <i className="bi bi-clipboard2-fill"></i>
-          </span>,
-        ],
-        className: isGroupItemDisabled(groupID) ? "opacity-25" : "",
-        variant: groupID === checkedGroup && "warning",
-        disabled: isGroupItemDisabled(groupID),
-        checked: groupID === checkedGroup,
-        value: groupID,
-        type: "radio",
-      })),
+      children: Object.entries(groupsList)
+        .map(([groupID, object]) => ({
+          badges: [
+            <span
+              className={`badge bg-gradient shadow-sm text-bg-${
+                object.userIDs.size ? "light" : "light"
+              } d-flex gap-1 align-items-center`}
+              key={"users"}
+            >
+              {object.userIDs.size}
+              <i className="bi bi-person-fill"></i>
+            </span>,
+            <span
+              className={`badge bg-gradient shadow-sm text-bg-${
+                object.reportIDs.size ? "light" : "light"
+              } d-flex gap-1 align-items-center`}
+              key={"reports"}
+            >
+              {object.reportIDs.size}
+              <i className="bi bi-clipboard2-fill"></i>
+            </span>,
+          ],
+          className: isGroupItemDisabled(groupID) ? "opacity-25" : "",
+          variant: groupID === checkedGroup && "warning",
+          disabled: isGroupItemDisabled(groupID),
+          checked: groupID === checkedGroup,
+          value: groupID,
+          type: "radio",
+        }))
+        .filter(({ value }) =>
+          value.toLowerCase().includes(groupSearchValue.toLowerCase())
+        ),
       onChange: getInputOnChangeHandler(setCheckedGroup),
     },
     reports: {
-      children: Object.keys(reportsList)
-        .map((reportID) => ({
+      children: Object.entries(reportsList)
+        .map(([reportID, { description, title }]) => ({
+          supportText: (
+            <a href={reportID} target="_blank" rel="noopener">
+              {reportID}
+            </a>
+          ),
           variant: reportIDs.has(reportID) && "warning",
           checked: checkedReports.has(reportID),
           className: !checkedGroup ? "" : "",
           disabled: !editing,
           type: "checkbox",
           value: reportID,
+          label: title,
+          description,
         }))
+        .filter(({ label }) =>
+          label.toLowerCase().includes(reportSearchValue.toLowerCase())
+        )
         .sort(sortReports),
       onChange: getInputOnChangeHandler(setCheckedReports),
     },
@@ -342,6 +458,9 @@ const useListGroups = ({
           type: "checkbox",
           value: userID,
         }))
+        .filter(({ value }) =>
+          value.toLowerCase().includes(userSearchValue.toLowerCase())
+        )
         .sort(sortUsers),
       onChange: getInputOnChangeHandler(setCheckedUsers),
     },
@@ -353,5 +472,46 @@ const useListGroups = ({
     users: checkedUsers,
   };
 
-  return { cancel: cancelEditing, checked, props };
+  const cannotEdit = !props.groups.children.find(
+    ({ value }) => value === checkedGroup
+  );
+
+  const [newUser, onNewUserChange] = useState("");
+
+  const newUserField = {
+    onClick: (e) => {
+      e.preventDefault();
+
+      onNewUserChange("");
+
+      setSettings(({ users, ...rest }) => ({
+        users: new Set([newUser, ...users]),
+        ...rest,
+      }));
+    },
+    disabled: props.users.children.find(
+      ({ value }) => value.toLowerCase() === newUser.toLowerCase()
+    ),
+    onChange: onNewUserChange,
+    value: newUser,
+  };
+
+  const [newGroup, onNewGroupChange] = useState("");
+
+  const newGroupField = {
+    disabled: props.groups.children.find(({ value }) =>
+      value.toLowerCase().includes(newGroup.toLowerCase())
+    ),
+    onChange: onNewGroupChange,
+    value: newGroup,
+  };
+
+  return {
+    newItemFields: { users: newUserField },
+    conditions: { cannotEdit },
+    cancel: cancelEditing,
+    checked,
+    search,
+    props,
+  };
 };

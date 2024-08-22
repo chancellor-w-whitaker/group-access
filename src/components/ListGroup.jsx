@@ -7,13 +7,16 @@ export const ListGroup = ({ children = [], onChange }) => {
           type = "radio",
           className = "",
           badges = [],
+          description,
+          supportText,
           disabled,
           checked,
           value,
+          label,
         }) => (
           <label
             className={`list-group-item d-flex gap-2 list-group-item-${variant} ${className}`.trim()}
-            title={value}
+            title={description ? description : value}
             key={value}
           >
             <input
@@ -26,7 +29,14 @@ export const ListGroup = ({ children = [], onChange }) => {
               value={value}
               type={type}
             />
-            <span className="text-truncate">{value}</span>
+            <span className="text-truncate">
+              {label ? label : value}
+              {supportText && (
+                <small className="d-block text-body-secondary text-truncate">
+                  {supportText}
+                </small>
+              )}
+            </span>
             <div className="ms-auto d-flex gap-2">
               {badges.map((badge) => badge)}
             </div>
