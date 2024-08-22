@@ -16,10 +16,10 @@ import { usePromise } from "./hooks/usePromise";
 
 // if someone adds something to default external, need team to be notified through email
 
-// if new user or list item gets added, and doesn't get placed at the top due to sorting, should the list automatically scroll to them?
-// ? in other words, need to make each list scrollable with constant height,
-// ? and when new item gets added, make list scrollTo new item
-// ! also keep in mind how the onClick function for adding a new group will differ from the new user version
+// * if new user or list item gets added, and doesn't get placed at the top due to sorting, should the list automatically scroll to them?
+// * in other words, need to make each list scrollable with constant height,
+// * and when new item gets added, make list scrollTo new item
+// * also keep in mind how the onClick function for adding a new group will differ from the new user version
 // * add title & url (in small font) to report list items (make element title={description})
 // * search for each column
 // export in original format
@@ -60,13 +60,20 @@ const SearchInput = ({
   );
 };
 
-const NewItemField = ({ onChange, disabled, onClick, value }) => {
+const NewItemField = ({
+  buttonDisabled,
+  inputDisabled,
+  onChange,
+  onClick,
+  value,
+}) => {
   const handleChange = (e) => onChange(e.target.value);
 
   return (
     <form className="d-flex mb-3">
       <input
         className="form-control me-2"
+        disabled={inputDisabled}
         onChange={handleChange}
         placeholder="New item"
         value={value}
@@ -74,7 +81,7 @@ const NewItemField = ({ onChange, disabled, onClick, value }) => {
       />
       <button
         className="btn btn-outline-success"
-        disabled={disabled}
+        disabled={buttonDisabled}
         onClick={onClick}
         type="submit"
       >
@@ -93,8 +100,6 @@ export default function App() {
     () => getInitialLists({ reports, users }),
     [reports, users]
   );
-
-  console.log(lists);
 
   const [settings, setSettings] = useResettableState(lists);
 
@@ -210,6 +215,9 @@ export default function App() {
             )}
           </div>
           <div>
+            <NewItemField {...newItemFields.groups}></NewItemField>
+          </div>
+          <div>
             <SearchInput {...search.groups}></SearchInput>
           </div>
           <ListGroup {...props.groups}></ListGroup>
@@ -285,6 +293,9 @@ export default function App() {
             >
               Delete
             </button> */}
+          </div>
+          <div>
+            <NewItemField buttonDisabled inputDisabled></NewItemField>
           </div>
           <div>
             <SearchInput {...search.reports}></SearchInput>
@@ -489,25 +500,40 @@ const useListGroups = ({
         ...rest,
       }));
     },
-    disabled: props.users.children.find(
-      ({ value }) => value.toLowerCase() === newUser.toLowerCase()
+    buttonDisabled: [...usersList].find(
+      (value) => value.toLowerCase() === newUser.toLowerCase()
     ),
     onChange: onNewUserChange,
+    inputDisabled: editing,
     value: newUser,
   };
 
   const [newGroup, onNewGroupChange] = useState("");
 
   const newGroupField = {
-    disabled: props.groups.children.find(({ value }) =>
-      value.toLowerCase().includes(newGroup.toLowerCase())
+    onClick: (e) => {
+      e.preventDefault();
+
+      onNewGroupChange("");
+
+      setSettings(({ groups, ...rest }) => ({
+        groups: Object.fromEntries([
+          [newGroup, { reportIDs: new Set(), userIDs: new Set() }],
+          ...Object.entries(groups),
+        ]),
+        ...rest,
+      }));
+    },
+    buttonDisabled: Object.keys(groupsList).find(
+      (value) => value.toLowerCase() === newGroup.toLowerCase()
     ),
     onChange: onNewGroupChange,
+    inputDisabled: editing,
     value: newGroup,
   };
 
   return {
-    newItemFields: { users: newUserField },
+    newItemFields: { groups: newGroupField, users: newUserField },
     conditions: { cannotEdit },
     cancel: cancelEditing,
     checked,

@@ -1,6 +1,47 @@
-export const ListGroup = ({ children = [], onChange }) => {
+import { useState, useId } from "react";
+
+export const ListGroup = ({
+  style = { maxHeight: 300 },
+  children = [],
+  onChange,
+}) => {
+  const name = useId();
+
+  const [previousChildren, setPreviousChildren] = useState(children);
+
+  const [newChild, setNewChild] = useState({});
+
+  if (previousChildren !== children) {
+    setPreviousChildren(children);
+
+    if (previousChildren.length === children.length - 1) {
+      const previousSet = new Set(previousChildren);
+
+      const differentObject = children.find(
+        (object) => !previousSet.has(object)
+      );
+
+      setNewChild(differentObject);
+    } else {
+      setNewChild({});
+    }
+  }
+
+  const getRefCallback = (value) => (node) => {
+    if (node) {
+      if (value === newChild.value) {
+        console.log(value, newChild.value);
+        node.scrollIntoView({
+          behavior: "smooth",
+          block: "nearest",
+          inline: "center",
+        });
+      }
+    }
+  };
+
   return (
-    <div className="list-group shadow-sm">
+    <div className="list-group shadow-sm overflow-y-scroll" style={style}>
       {children.map(
         ({
           variant = "light",
@@ -17,6 +58,7 @@ export const ListGroup = ({ children = [], onChange }) => {
           <label
             className={`list-group-item d-flex gap-2 list-group-item-${variant} ${className}`.trim()}
             title={description ? description : value}
+            ref={getRefCallback(value)}
             key={value}
           >
             <input
@@ -28,6 +70,7 @@ export const ListGroup = ({ children = [], onChange }) => {
               checked={checked}
               value={value}
               type={type}
+              name={name}
             />
             <span className="text-truncate">
               {label ? label : value}
