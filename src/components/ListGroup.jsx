@@ -9,28 +9,29 @@ export const ListGroup = ({
 
   const [previousChildren, setPreviousChildren] = useState(children);
 
-  const [newChild, setNewChild] = useState({});
+  const [newValue, setNewValue] = useState();
 
   if (previousChildren !== children) {
     setPreviousChildren(children);
 
     if (previousChildren.length === children.length - 1) {
-      const previousSet = new Set(previousChildren);
-
-      const differentObject = children.find(
-        (object) => !previousSet.has(object)
+      const previousValues = new Set(
+        previousChildren.map(({ value }) => value)
       );
 
-      setNewChild(differentObject);
+      const differentValue = children.find(
+        ({ value }) => !previousValues.has(value)
+      ).value;
+
+      setNewValue(differentValue);
     } else {
-      setNewChild({});
+      setNewValue();
     }
   }
 
   const getRefCallback = (value) => (node) => {
     if (node) {
-      if (value === newChild.value) {
-        console.log(value, newChild.value);
+      if (value === newValue) {
         node.scrollIntoView({
           behavior: "smooth",
           block: "nearest",

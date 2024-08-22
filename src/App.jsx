@@ -308,6 +308,32 @@ export default function App() {
     },
   ];
 
+  const backToOriginalFormat = () => {
+    const { reports, groups, users } = settings;
+
+    const reportsJson = Object.entries(reports).map(([reportID, report]) => {
+      const relevantGroups = Object.entries(groups)
+        .filter(([groupID, { reportIDs }]) => reportIDs.has(reportID))
+        .map(([groupID]) => groupID);
+
+      return { ...report, groups: relevantGroups };
+    });
+
+    const usersJson = [...users].map((userID) => ({
+      [userConstants.primaryKey]: userID,
+      ...Object.fromEntries(
+        Object.entries(groups).map(([groupID, { userIDs }]) => [
+          groupID,
+          userIDs.has(userID) ? 1 : null,
+        ])
+      ),
+    }));
+
+    return { reports: reportsJson, users: usersJson };
+  };
+
+  console.log(backToOriginalFormat());
+
   return (
     <FeatureColumns
       header={
@@ -500,9 +526,10 @@ const useListGroups = ({
         ...rest,
       }));
     },
-    buttonDisabled: [...usersList].find(
-      (value) => value.toLowerCase() === newUser.toLowerCase()
-    ),
+    buttonDisabled:
+      [...usersList].find(
+        (value) => value.toLowerCase() === newUser.toLowerCase()
+      ) || !newUser,
     onChange: onNewUserChange,
     inputDisabled: editing,
     value: newUser,
@@ -524,9 +551,10 @@ const useListGroups = ({
         ...rest,
       }));
     },
-    buttonDisabled: Object.keys(groupsList).find(
-      (value) => value.toLowerCase() === newGroup.toLowerCase()
-    ),
+    buttonDisabled:
+      Object.keys(groupsList).find(
+        (value) => value.toLowerCase() === newGroup.toLowerCase()
+      ) || !newGroup,
     onChange: onNewGroupChange,
     inputDisabled: editing,
     value: newGroup,
