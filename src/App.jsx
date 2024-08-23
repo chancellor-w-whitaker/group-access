@@ -78,6 +78,8 @@ const backToOriginalFormat = (settings) => {
   return { reports: reportsJson, users: usersJson };
 };
 
+console.log(["chance"].join("-"));
+
 const nextSortMethod = {
   ascending: "descending",
   descending: "none",
