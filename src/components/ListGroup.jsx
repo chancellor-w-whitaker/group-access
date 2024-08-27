@@ -1,10 +1,6 @@
 import { useState, useId } from "react";
 
-export const ListGroup = ({
-  style = { maxHeight: 300 },
-  children = [],
-  onChange,
-}) => {
+export const ListGroup = ({ style = { maxHeight: 300 }, children = [] }) => {
   const name = useId();
 
   const [previousChildren, setPreviousChildren] = useState(children);
@@ -48,10 +44,12 @@ export const ListGroup = ({
           variant = "light",
           type = "radio",
           className = "",
+          name: listName,
           badges = [],
           description,
           supportText,
           disabled,
+          onChange,
           checked,
           value,
           label,
@@ -66,12 +64,12 @@ export const ListGroup = ({
               className={`form-check-input flex-shrink-0 opacity-${
                 disabled ? 0 : 100
               }`}
+              name={listName ? listName : name}
               disabled={disabled}
               onChange={onChange}
               checked={checked}
               value={value}
               type={type}
-              name={name}
             />
             <span className="text-truncate">
               {label ? label : value}

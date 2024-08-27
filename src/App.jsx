@@ -8,6 +8,7 @@ import { getInitialLists } from "./helpers/getInitialLists";
 import { userConstants } from "./constants/userConstants";
 import { miscConstants } from "./constants/miscConstants";
 import { ListGroup } from "./components/ListGroup";
+import { kebabCase } from "./generator/kebabCase";
 import { usePromise } from "./hooks/usePromise";
 
 // have an edit mode per group (items are disabled until then)
@@ -24,9 +25,11 @@ import { usePromise } from "./hooks/usePromise";
 // * search for each column
 // * export in original format
 
-// ! search for report should include url as well
+// * search for report should include url as well
+// * check all/uncheck all
+// ! setting to point to backend
 // ! when not editing, give ability to click (activate) user or report to show connections
-// ! check all/uncheck all
+// ? in other words, will have a top level checked (imagine the other lists were radio lists when not editing, and you can check one of them as the single top level checked. it will highlight the connected ones in the other lists. if it weren't clear, when not editing, only one list item in the entire app can be checked. )
 
 const downloadJson = (json, filename = "example") => {
   // Turn the JSON object into a string
@@ -79,6 +82,8 @@ const backToOriginalFormat = (settings) => {
 };
 
 console.log(["chance"].join("-"));
+
+console.log(kebabCase("").length);
 
 const nextSortMethod = {
   ascending: "descending",
@@ -176,13 +181,20 @@ export default function App() {
     });
   };
 
-  const { newItemFields, conditions, checked, cancel, search, props } =
-    useListGroups({
-      lists: settings,
-      setSettings,
-      editing,
-      sort,
-    });
+  const {
+    newItemFields,
+    conditions,
+    checkAll,
+    checked,
+    cancel,
+    search,
+    props,
+  } = useListGroups({
+    lists: settings,
+    setSettings,
+    editing,
+    sort,
+  });
 
   const saveChanges = () => {
     setSettings((state) => {
@@ -294,6 +306,18 @@ export default function App() {
               disabled={!checked.group}
               type="button"
             >{`Sort ${sortSymbol[sort.users]}`}</button>
+            <button
+              className={`btn btn-secondary bg-gradient ${
+                !editing || props.users.children.length === 0
+                  ? "text-decoration-line-through"
+                  : ""
+              }`.trim()}
+              disabled={!editing || props.users.children.length === 0}
+              onClick={checkAll.users}
+              type="button"
+            >
+              Check All
+            </button>
             {/* <button
               className={`btn btn-success text-decoration-line-through`}
               type="button"
@@ -335,6 +359,18 @@ export default function App() {
             >
               {`Sort ${sortSymbol[sort.reports]}`}
             </button>
+            <button
+              className={`btn btn-secondary bg-gradient ${
+                !editing || props.reports.children.length === 0
+                  ? "text-decoration-line-through"
+                  : ""
+              }`.trim()}
+              disabled={!editing || props.reports.children.length === 0}
+              onClick={checkAll.reports}
+              type="button"
+            >
+              Check All
+            </button>
             {/* <button
               className="btn btn-success text-decoration-line-through"
               type="button"
@@ -373,31 +409,33 @@ export default function App() {
   };
 
   return (
-    <FeatureColumns
-      header={
-        <div className="d-flex gap-2 flex-wrap">
-          <div>Settings</div>
-          <div>
-            {!checked.group ? (
-              <span className="fs-2">{`(Select a group)`}</span>
-            ) : (
-              ""
-            )}
+    <>
+      <FeatureColumns
+        header={
+          <div className="d-flex gap-2 flex-wrap">
+            <div>Settings</div>
+            <div>
+              {!checked.group ? (
+                <span className="fs-2">{`(Select a group)`}</span>
+              ) : (
+                ""
+              )}
+            </div>
+            <div>
+              <button
+                className="btn btn-primary bg-gradient"
+                onClick={exportJson}
+                type="button"
+              >
+                Export
+              </button>
+            </div>
           </div>
-          <div>
-            <button
-              className="btn btn-primary bg-gradient"
-              onClick={exportJson}
-              type="button"
-            >
-              Export
-            </button>
-          </div>
-        </div>
-      }
-    >
-      {features}
-    </FeatureColumns>
+        }
+      >
+        {features}
+      </FeatureColumns>
+    </>
   );
 }
 
@@ -407,7 +445,13 @@ const useListGroups = ({
   setSettings,
   editing,
 }) => {
-  const [checkedGroup, setCheckedGroup] = useState();
+  const [checkedRadio, setCheckedRadio] = useState({ value: null, name: null });
+
+  const onRadioChange = ({ target: { value, name } }) =>
+    setCheckedRadio({ value, name });
+
+  const checkedGroup =
+    checkedRadio.name === "groups" ? checkedRadio.value : null;
 
   const [groupSearchValue, onGroupSearchValueChange] = useState("");
 
@@ -455,16 +499,19 @@ const useListGroups = ({
     none: (bool) => (bool ? 0 : 0),
   };
 
-  const reportsSortConverter = sortConverters[reportsSort];
+  const getVariantSort =
+    (direction) =>
+    ({ variant: a }, { variant: b }) =>
+      sortConverters[direction](a === "warning") -
+      sortConverters[direction](b === "warning");
 
   const sortReports = ({ value: a }, { value: b }) =>
-    reportsSortConverter(reportIDs.has(a)) -
-    reportsSortConverter(reportIDs.has(b));
-
-  const usersSortConverter = sortConverters[usersSort];
+    sortConverters[reportsSort](reportIDs.has(a)) -
+    sortConverters[reportsSort](reportIDs.has(b));
 
   const sortUsers = ({ value: a }, { value: b }) =>
-    usersSortConverter(userIDs.has(a)) - usersSortConverter(userIDs.has(b));
+    sortConverters[usersSort](userIDs.has(a)) -
+    sortConverters[usersSort](userIDs.has(b));
 
   const isGroupItemDisabled = (groupID) =>
     checkedGroup && editing && groupID !== checkedGroup;
@@ -473,6 +520,85 @@ const useListGroups = ({
     reports: reportsSearch,
     groups: groupsSearch,
     users: usersSearch,
+  };
+
+  const loneCheckedReport =
+    checkedRadio.name === "reports" ? checkedRadio.value : null;
+
+  const checkedReportConnections = useMemo(() => {
+    if (loneCheckedReport) {
+      const relevantEntries = Object.entries(groupsList).filter(
+        ([groupID, { reportIDs }]) => reportIDs.has(loneCheckedReport)
+      );
+
+      const connectedGroups = new Set(
+        relevantEntries.map(([groupID]) => groupID)
+      );
+
+      const connectedUsers = new Set(
+        relevantEntries.map(([groupID, { userIDs }]) => [...userIDs]).flat()
+      );
+
+      return { groupIDs: connectedGroups, userIDs: connectedUsers };
+    }
+
+    return { groupIDs: new Set(), userIDs: new Set() };
+  }, [loneCheckedReport, groupsList]);
+
+  const loneCheckedUser =
+    checkedRadio.name === "users" ? checkedRadio.value : null;
+
+  const checkedUserConnections = useMemo(() => {
+    if (loneCheckedUser) {
+      console.log(groupsList);
+      const relevantEntries = Object.entries(groupsList).filter(
+        ([groupID, { userIDs }]) => userIDs.has(loneCheckedUser)
+      );
+
+      const connectedGroups = new Set(
+        relevantEntries.map(([groupID]) => groupID)
+      );
+
+      const connectedReports = new Set(
+        relevantEntries.map(([groupID, { reportIDs }]) => [...reportIDs]).flat()
+      );
+
+      console.log(connectedGroups, connectedReports);
+
+      return { reportIDs: connectedReports, groupIDs: connectedGroups };
+    }
+
+    return { reportIDs: new Set(), groupIDs: new Set() };
+  }, [loneCheckedUser, groupsList]);
+
+  const isWarningVariant = ({ reportID, groupID, userID }) => {
+    const { value, name } = checkedRadio;
+
+    if (value) {
+      if (value === checkedGroup) {
+        if (reportID) return reportIDs.has(reportID);
+
+        if (groupID) return groupID === checkedGroup;
+
+        if (userID) return userIDs.has(userID);
+      }
+
+      if (value === loneCheckedUser) {
+        if (reportID) return checkedUserConnections.reportIDs.has(reportID);
+
+        if (groupID) return checkedUserConnections.groupIDs.has(groupID);
+
+        if (userID) return userID === loneCheckedUser;
+      }
+
+      if (value === loneCheckedReport) {
+        if (reportID) return reportID === loneCheckedReport;
+
+        if (groupID) return checkedReportConnections.groupIDs.has(groupID);
+
+        if (userID) return checkedReportConnections.userIDs.has(userID);
+      }
+    }
   };
 
   const props = {
@@ -500,16 +626,18 @@ const useListGroups = ({
             </span>,
           ],
           className: isGroupItemDisabled(groupID) ? "opacity-25" : "",
-          variant: groupID === checkedGroup && "warning",
+          variant: isWarningVariant({ groupID }) && "warning",
           disabled: isGroupItemDisabled(groupID),
           checked: groupID === checkedGroup,
+          onChange: onRadioChange,
           value: groupID,
+          name: "groups",
           type: "radio",
         }))
         .filter(({ value }) =>
           value.toLowerCase().includes(groupSearchValue.toLowerCase())
-        ),
-      onChange: getInputOnChangeHandler(setCheckedGroup),
+        )
+        .sort(getVariantSort("ascending")),
     },
     reports: {
       children: Object.entries(reportsList)
@@ -519,36 +647,44 @@ const useListGroups = ({
               {reportID}
             </a>
           ),
-          variant: reportIDs.has(reportID) && "warning",
-          checked: checkedReports.has(reportID),
-          className: !checkedGroup ? "" : "",
-          disabled: !editing,
-          type: "checkbox",
+          checked: !editing
+            ? reportID === loneCheckedReport
+            : checkedReports.has(reportID),
+          onChange: !editing
+            ? onRadioChange
+            : getInputOnChangeHandler(setCheckedReports),
+          variant: isWarningVariant({ reportID }) && "warning",
+          type: !editing ? "radio" : "checkbox",
           value: reportID,
+          name: "reports",
           label: title,
           description,
         }))
-        .filter(({ label }) =>
-          label.toLowerCase().includes(reportSearchValue.toLowerCase())
+        .filter(
+          ({ label, value }) =>
+            label.toLowerCase().includes(reportSearchValue.toLowerCase()) ||
+            value.toLowerCase().includes(reportSearchValue.toLowerCase())
         )
-        .sort(sortReports),
-      onChange: getInputOnChangeHandler(setCheckedReports),
+        .sort(getVariantSort("ascending")),
     },
     users: {
       children: [...usersList]
         .map((userID) => ({
-          variant: userIDs.has(userID) && "warning",
-          className: !checkedGroup ? "" : "",
-          checked: checkedUsers.has(userID),
-          disabled: !editing,
-          type: "checkbox",
+          onChange: !editing
+            ? onRadioChange
+            : getInputOnChangeHandler(setCheckedUsers),
+          checked: !editing
+            ? userID === loneCheckedUser
+            : checkedUsers.has(userID),
+          variant: isWarningVariant({ userID }) && "warning",
+          type: !editing ? "radio" : "checkbox",
           value: userID,
+          name: "users",
         }))
         .filter(({ value }) =>
           value.toLowerCase().includes(userSearchValue.toLowerCase())
         )
-        .sort(sortUsers),
-      onChange: getInputOnChangeHandler(setCheckedUsers),
+        .sort(getVariantSort("ascending")),
     },
   };
 
@@ -609,7 +745,45 @@ const useListGroups = ({
     value: newGroup,
   };
 
+  const areAllUserChildrenChecked = () => {
+    for (const { value: userID } of props.users.children) {
+      if (!checkedUsers.has(userID)) {
+        return false;
+      }
+    }
+    return true;
+  };
+
+  const toggleAllUserChildren = () => {
+    setCheckedUsers(
+      areAllUserChildrenChecked()
+        ? new Set()
+        : new Set(props.users.children.map(({ value }) => value))
+    );
+  };
+
+  const areAllReportChildrenChecked = () => {
+    for (const { value: reportID } of props.reports.children) {
+      if (!checkedReports.has(reportID)) {
+        return false;
+      }
+    }
+    return true;
+  };
+
+  const toggleAllReportChildren = () => {
+    setCheckedUsers(
+      areAllReportChildrenChecked()
+        ? new Set()
+        : new Set(props.reports.children.map(({ value }) => value))
+    );
+  };
+
   return {
+    checkAll: {
+      reports: toggleAllReportChildren,
+      users: toggleAllUserChildren,
+    },
     newItemFields: { groups: newGroupField, users: newUserField },
     conditions: { cannotEdit },
     cancel: cancelEditing,
