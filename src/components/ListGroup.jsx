@@ -37,6 +37,8 @@ export const ListGroup = ({ style = { maxHeight: 300 }, children = [] }) => {
     }
   };
 
+  const order = children.map(({ value }) => value);
+
   return (
     <div className="list-group shadow-sm overflow-y-scroll" style={style}>
       {children.map(
@@ -64,9 +66,9 @@ export const ListGroup = ({ style = { maxHeight: 300 }, children = [] }) => {
               className={`form-check-input flex-shrink-0 opacity-${
                 disabled ? 0 : 100
               }`}
+              onChange={(e) => onChange(e, order)}
               name={listName ? listName : name}
               disabled={disabled}
-              onChange={onChange}
               checked={checked}
               value={value}
               type={type}

@@ -31,6 +31,8 @@ import { usePromise } from "./hooks/usePromise";
 // ! when not editing, give ability to click (activate) user or report to show connections
 // ? in other words, will have a top level checked (imagine the other lists were radio lists when not editing, and you can check one of them as the single top level checked. it will highlight the connected ones in the other lists. if it weren't clear, when not editing, only one list item in the entire app can be checked. )
 
+// keep sorting, but whatever you click on shouldn't jump around
+
 const downloadJson = (json, filename = "example") => {
   // Turn the JSON object into a string
   const data = JSON.stringify(json);
@@ -447,9 +449,6 @@ const useListGroups = ({
 }) => {
   const [checkedRadio, setCheckedRadio] = useState({ value: null, name: null });
 
-  const onRadioChange = ({ target: { value, name } }) =>
-    setCheckedRadio({ value, name });
-
   const checkedGroup =
     checkedRadio.name === "groups" ? checkedRadio.value : null;
 
@@ -601,9 +600,26 @@ const useListGroups = ({
     }
   };
 
-  const props = {
-    groups: {
-      children: Object.entries(groupsList)
+  const [orderOfActiveList, setOrderOfActiveList] = useState([]);
+
+  console.log(orderOfActiveList);
+
+  const onRadioChange = (e, order = []) => {
+    const {
+      target: { value, name },
+    } = e;
+
+    setCheckedRadio({ value, name });
+
+    setOrderOfActiveList(order);
+  };
+
+  // when you click a radio option, of the clicked list, you need to document what it's order was prior to the click
+  // that list should be sorted according to this order!
+
+  const getChildren = (listName) => {
+    if (listName === "groups") {
+      return Object.entries(groupsList)
         .map(([groupID, object]) => ({
           badges: [
             <span
@@ -637,10 +653,14 @@ const useListGroups = ({
         .filter(({ value }) =>
           value.toLowerCase().includes(groupSearchValue.toLowerCase())
         )
-        .sort(getVariantSort("ascending")),
-    },
-    reports: {
-      children: Object.entries(reportsList)
+        .sort(
+          checkedRadio.name === "groups"
+            ? getIndexSortCallback({ order: orderOfActiveList })
+            : getVariantSort("ascending")
+        );
+    }
+    if (listName === "reports") {
+      return Object.entries(reportsList)
         .map(([reportID, { description, title }]) => ({
           supportText: (
             <a href={reportID} target="_blank" rel="noopener">
@@ -665,10 +685,14 @@ const useListGroups = ({
             label.toLowerCase().includes(reportSearchValue.toLowerCase()) ||
             value.toLowerCase().includes(reportSearchValue.toLowerCase())
         )
-        .sort(getVariantSort("ascending")),
-    },
-    users: {
-      children: [...usersList]
+        .sort(
+          checkedRadio.name === "reports"
+            ? getIndexSortCallback({ order: orderOfActiveList })
+            : getVariantSort("ascending")
+        );
+    }
+    if (listName === "users") {
+      return [...usersList]
         .map((userID) => ({
           onChange: !editing
             ? onRadioChange
@@ -684,7 +708,23 @@ const useListGroups = ({
         .filter(({ value }) =>
           value.toLowerCase().includes(userSearchValue.toLowerCase())
         )
-        .sort(getVariantSort("ascending")),
+        .sort(
+          checkedRadio.name === "users"
+            ? getIndexSortCallback({ order: orderOfActiveList })
+            : getVariantSort("ascending")
+        );
+    }
+  };
+
+  const props = {
+    reports: {
+      children: getChildren("reports"),
+    },
+    groups: {
+      children: getChildren("groups"),
+    },
+    users: {
+      children: getChildren("users"),
     },
   };
 
@@ -791,4 +831,12 @@ const useListGroups = ({
     search,
     props,
   };
+};
+
+const getIndexSortCallback = ({ key = "value", order }) => {
+  const evaluateIndexOfValue = (value) =>
+    order.includes(value) ? order.indexOf(value) : Number.MAX_SAFE_INTEGER;
+
+  return ({ [key]: valueA }, { [key]: valueB }) =>
+    evaluateIndexOfValue(valueA) - evaluateIndexOfValue(valueB);
 };
