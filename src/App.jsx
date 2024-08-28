@@ -31,6 +31,10 @@ import { usePromise } from "./hooks/usePromise";
 // ! when not editing, give ability to click (activate) user or report to show connections
 // ? in other words, will have a top level checked (imagine the other lists were radio lists when not editing, and you can check one of them as the single top level checked. it will highlight the connected ones in the other lists. if it weren't clear, when not editing, only one list item in the entire app can be checked. )
 
+// need to provide some sort of instruction (popup) when connect user -> report
+// only have list of applicable groups
+// try to create new connection between user & report (selected one from first list, started editing, selected one from other list, launch popup, select from groups radio list in popup, close popup, continue editing)
+
 // keep sorting, but whatever you click on shouldn't jump around
 
 const downloadJson = (json, filename = "example") => {
